@@ -2,19 +2,30 @@ use std::env;
 use std::io::{self, Write};
 use std::process;
 
-
+mod terminal_raw_mode;
+use terminal_raw_mode::enable_raw_mode;
+use terminal_raw_mode::disable_raw_mode;
 
 fn run_repl() {
-    let mut line_buffer = String::new();
+    // let mut line_buffer = String::new();
+    let mut buffer: &[u8] = &[0; 1];
     
    loop {
         print!(">> ");
         let _ = io::stdout().flush();
         
-        match io::stdin().read_line(&mut line_buffer) {
+        enable_raw_mode();
+        
+        match io::stdin().read_exact(&mut buffer) {
         Ok(_) => {
-            println!("{}", line_buffer);
-            line_buffer.clear();
+            let newline = buffer[0] as char;
+            
+            if newline == '\n' {
+                disable_raw_mode();
+                process::exit(0)
+            }
+            println!("{}", buffer);
+            buffer.clear();
             ()
         },
         Err(_) => {
@@ -23,6 +34,7 @@ fn run_repl() {
         }
     }
    }
+   
 
 }
 
